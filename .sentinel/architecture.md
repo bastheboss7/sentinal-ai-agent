@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Sentinel is an enterprise QA decision layer for `route-service-tests` that converts BrowserStack manual intent into deterministic, governed automation decisions.
+Sentinel is an enterprise QA decision layer for `[service-tests]` that converts BrowserStack manual intent into deterministic, governed automation decisions.
 
 This architecture defines:
 - system boundaries,
@@ -28,7 +28,7 @@ This architecture defines:
 ## 3. System Context
 
 ### External systems
-- BrowserStack Test Management (`PR-87`)
+- BrowserStack Test Management (`[ProjectKey]`)
 - Copilot custom-agent runtime
 
 ### Internal systems
@@ -69,10 +69,10 @@ Responsibilities:
 
 Transport strategy (hybrid):
 - **MCP (preferred):** `mcp_browserstack_listTestCases` via BrowserStack VS Code extension. Handles authentication, pagination, and endpoint routing automatically. Used when agent is invoked in Copilot Chat.
-- **Java client (fallback):** `BrowserStackClient` at `src/test/java/uk/co/evri/apiautomation/integrations/`. Uses BrowserStack TM v2 REST API (`GET /api/v2/projects/{projectKey}/test-cases`). Configured via `src/test/resources/browserstack.properties`. Available for CI/pipeline execution and when MCP is unavailable.
+- **Java client (fallback):** `[ExternalTestManagementClient]` at `src/test/java/[company]/[service]/automation/integrations/`. Uses BrowserStack TM v2 REST API (`GET /api/v2/projects/{projectKey}/test-cases`). Configured via `src/test/resources/browserstack.properties`. Available for CI/pipeline execution and when MCP is unavailable.
 
 Primary implementation location:
-- `src/test/java/uk/co/evri/apiautomation/integrations/`
+- `src/test/java/[company]/[service]/automation/integrations/`
 
 ## 5.3 Coverage Mapper
 Responsibilities:
@@ -106,10 +106,10 @@ Write target:
 | Maven | 3.x (wrapper) | Build, dependency management, lifecycle |
 | JUnit 5 | Current | Test runner; `BaseTest`/`BaseSteps` inheritance required |
 | Rest Assured | Current | HTTP execution and API assertion |
-| Jackson XML | Current | XML deserialization; `XmlUtils.validateXmlByXsd` for contract validation |
+| Jackson XML | Current | XML deserialization; `[XmlValidationUtils].validateXmlByXsd` for contract validation |
 | Allure | Current | Test execution reporting |
 | Checkstyle | Current | Code quality gate; `checkstyle.xml` enforced in CI |
-| BrowserStack Test Management | PR-87 | External intake source for manual test cases |
+| BrowserStack Test Management | [ProjectKey] | External intake source for manual test cases |
 | BrowserStack MCP tool | VS Code extension | Preferred intake transport — `mcp_browserstack_listTestCases` |
 | Copilot custom agent runtime | VS Code | Agent invocation via `.github/agents/*.agent.md` |
 
@@ -117,12 +117,12 @@ Write target:
 
 | Layer | Path | Responsibility |
 |---|---|---|
-| Tests | `src/test/java/uk/co/evri/apiautomation/tests/` | Scenario execution; JUnit 5 entry points |
-| Steps | `src/test/java/uk/co/evri/apiautomation/steps/` | Reusable step definitions via `BaseSteps` |
-| Models | `src/test/java/uk/co/evri/apiautomation/models/` | Request/response POJOs and XML schema objects |
-| Utils | `src/test/java/uk/co/evri/apiautomation/utils/` | Shared helpers including `XmlUtils` |
-| Database | `src/test/java/uk/co/evri/apiautomation/database/` | DB setup, teardown, and assertion support |
-| Sentinel integrations | `src/test/java/uk/co/evri/apiautomation/integrations/` | BrowserStack transport layer and governance pipeline (Phase 2C); fallback when MCP unavailable |
+| Tests | `src/test/java/[company]/[service]/automation/tests/` | Scenario execution; JUnit 5 entry points |
+| Steps | `src/test/java/[company]/[service]/automation/steps/` | Reusable step definitions via `BaseSteps` |
+| Models | `src/test/java/[company]/[service]/automation/models/` | Request/response POJOs and XML schema objects |
+| Utils | `src/test/java/[company]/[service]/automation/utils/` | Shared helpers including `[XmlValidationUtils]` |
+| Database | `src/test/java/[company]/[service]/automation/database/` | DB setup, teardown, and assertion support |
+| Sentinel integrations | `src/test/java/[company]/[service]/automation/integrations/` | BrowserStack transport layer and governance pipeline (Phase 2C); fallback when MCP unavailable |
 | Sentinel governance / operations | `.sentinel/` | Coverage store, planner, roadmap, templates, architecture |
 | Agent definitions and contracts | `.github/agents/` | Intake agent spec and I/O schema contracts |
 
@@ -307,5 +307,7 @@ These operations files are internal helper artifacts and are not part of the ext
 - `.sentinel/product_sentinel.md`
 - `.github/agents/sentinel-intake.agent.md`
 - `.github/agents/sentinel-intake-schema.md`
-- `docs/product.md`
-- `docs/structure.md`
+- `<consumer-repo>/docs/product.md`
+- `<consumer-repo>/docs/structure.md`
+
+

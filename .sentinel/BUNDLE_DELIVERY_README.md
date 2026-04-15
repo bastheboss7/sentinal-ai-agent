@@ -10,7 +10,7 @@ Sentinel V1 is a governed BrowserStack-to-coverage decision package for Copilot 
 
 ## Current release status
 
-- POC stage is complete with validated intake decision evidence (`QA-T6504`, `QA-T8666`).
+- POC stage is complete with validated intake decision evidence (`[QA-Case-001]`, `[QA-Case-002]`).
 - Next active milestone is external delivery decoupling as a versioned V1 Git package.
 - Phase 2C remains constrained by BrowserStack Java transport authentication (`401`) until credentials are provisioned.
 - Phase 2F is functionally complete in synthetic validation; live external pilot execution is pending.
@@ -35,8 +35,8 @@ Sentinel V1 is a governed BrowserStack-to-coverage decision package for Copilot 
 ## Optional reference files
 
 - `.sentinel/product_sentinel.md` (internal product deep-dive)
-- `docs/product.md` (current-domain business context)
-- `docs/structure.md` (current-domain framework conventions)
+- `<consumer-repo>/docs/product.md` (consumer-domain business context)
+- `<consumer-repo>/docs/structure.md` (consumer-domain framework conventions)
 
 External teams can onboard without the optional reference files above.
 
@@ -53,6 +53,61 @@ External teams can onboard without the optional reference files above.
    - `Net-new automation`
    - `Extend existing coverage`
    - `Traceability-only gap`
+
+## Installation (external teams, MCP path)
+
+Use this installation flow for Sentinel V1 external onboarding.
+
+### 1. Install required tooling
+
+1. Install Visual Studio Code.
+2. Install GitHub Copilot and GitHub Copilot Chat extensions.
+3. Install BrowserStack VS Code extension with MCP support enabled.
+
+### 2. Clone and open this bundle repository
+
+1. Clone this external Sentinel bundle repository to a local workspace.
+2. Open the repository root in VS Code.
+3. Confirm these files exist at root-level paths:
+   - `.github/AGENTS.md`
+   - `.github/agents/sentinel-intake.agent.md`
+   - `.github/agents/sentinel-intake-schema.md`
+   - `copilot-instructions.md`
+4. Add your automation repository to the same VS Code workspace (multi-root):
+   - root 1: Sentinel bundle repository (this package)
+   - root 2: automation repository where test suites/classes live
+5. Keep both roots open during intake mapping so the agent can discover real coverage targets.
+
+### 3. Configure BrowserStack access for MCP
+
+1. Sign in to BrowserStack from the VS Code extension.
+2. Verify Test Management access to project `[ProjectKey]` (or your approved project).
+3. Keep MCP as the active intake transport for V1.
+
+### 4. First-run validation
+
+In Copilot Chat, run:
+
+```text
+@sentinel-intake-agent Map BrowserStack case [QA-Case-XXX] from [ProjectKey] to existing coverage
+```
+
+Expected successful signals:
+1. Agent loads and responds as `@sentinel-intake-agent`.
+2. Agent discovers cases under the requested root path and shows a shortlist.
+3. Agent asks for explicit case confirmation before mapping.
+4. Mapping output can reference suites/classes from the automation repository root.
+
+If first-run fails:
+1. `Agent not found`: verify `.github/agents/sentinel-intake.agent.md` path and workspace root.
+2. BrowserStack auth error: re-check BrowserStack extension sign-in and project access.
+3. Missing shortlist: verify folder/path selection and that target cases are `not_automated`.
+4. Missing or weak coverage mapping: confirm Sentinel bundle repo and automation repo are both open in the same VS Code workspace.
+
+### 5. V1 installation scope note
+
+Installation guidance in this package is MCP-only for V1 external onboarding.
+Any non-MCP transport path is outside this installation baseline.
 
 ## Known constraints
 
@@ -75,4 +130,6 @@ The following are intentionally excluded from external delivery:
 
 The following are archived and excluded from external delivery:
 - `.sentinel/archive/pilot-package-template.md`
-- `.sentinel/archive/poc-phase-1-example-QA-T6504.md`
+- `.sentinel/archive/poc-phase-1-example-[QA-Case-001].md`
+
+

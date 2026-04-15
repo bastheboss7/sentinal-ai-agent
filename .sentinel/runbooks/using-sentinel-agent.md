@@ -9,9 +9,11 @@ This guide explains how to invoke the Sentinel Intake Agent, interpret its outpu
 | Requirement | Detail |
 |---|---|
 | VS Code | With GitHub Copilot Chat extension |
-| Workspace | `route-service-tests` cloned and open |
-| BrowserStack access | Token for Test Management API (v2) set in env or `browserstack.properties` |
+| Workspace | Same VS Code workspace (multi-root) with both repositories open: Sentinel bundle repo and automation repo |
+| BrowserStack access | BrowserStack VS Code extension signed in with MCP enabled and project access available |
 | Agent file | `.github/agents/sentinel-intake.agent.md` must exist in workspace root |
+
+Mapping quality depends on both roots being open in one workspace. If only the Sentinel bundle repo is open, shortlist retrieval may work but nearest-suite and nearest-target evidence can be incomplete.
 
 ## Quick start
 
@@ -20,24 +22,24 @@ This guide explains how to invoke the Sentinel Intake Agent, interpret its outpu
 In VS Code Copilot Chat, type:
 
 ```
-@sentinel-intake-agent Map BrowserStack case QA-T<number> from PR-87 to existing coverage
+@sentinel-intake-agent Map BrowserStack case [QA-Case-XXX] from [ProjectKey] to existing coverage
 ```
 
 Or use the full intake format:
 
 ```
 @sentinel-intake-agent
-Project: PR-87
-Root path: Level 1 > Route service > POST > routeDeliveryCreatePreadviceAndLabel
-Case ID: QA-T6504
-Scenario: ParcelShop delivery generates correct label content
-Expected outcome: Label contains ParcelShop routing and sort-level data
+Project: [ProjectKey]
+Root path: [ServiceRootPath] > POST > /<endpoint>
+Case ID: [QA-Case-001]
+Scenario: [Business scenario description]
+Expected outcome: [Expected business/API outcome]
 ```
 
 ### 2. Review the discovery shortlist
 
 The agent will:
-1. Load workspace context from `docs/product.md` and `docs/structure.md`
+1. Load workspace context from `<consumer-repo>/docs/product.md` and `<consumer-repo>/docs/structure.md`
 2. Query BrowserStack for manual cases under the specified root path
 3. Present a shortlist of `not_automated` cases for your confirmation
 
@@ -51,7 +53,7 @@ After confirming a case, the agent produces:
 |---|---|
 | `decision.type` | `Extend existing coverage`, `Net-new automation`, or `Traceability-only gap` |
 | `decision.rationale` | Evidence-based explanation citing existing tests |
-| `mapping.nearestSuite` | Closest existing test suite (e.g., `CreatePreadviceAndLabelTests`) |
+| `mapping.nearestSuite` | Closest existing test suite (e.g., `[EndpointSpecificTests]`) |
 | `mapping.nearestTarget` | Specific test method or class path |
 | `risks` | Identified risks for the recommendation |
 | `approval.status` | `Pending` — requires human review |
@@ -69,13 +71,13 @@ Review the decision package with your team:
 After review, tell the agent:
 
 ```
-@sentinel-intake-agent Approve the proposal for QA-T6504, approver: qa-lead
+@sentinel-intake-agent Approve the proposal for [QA-Case-001], approver: qa-lead
 ```
 
 Or reject:
 
 ```
-@sentinel-intake-agent Reject the proposal for QA-T6504 — rationale conflicts with recent API contract change
+@sentinel-intake-agent Reject the proposal for [QA-Case-001] — rationale conflicts with current API contract
 ```
 
 ### 5. Coverage file update
@@ -107,7 +109,7 @@ Use this gate to formally close the Sentinel POC stage.
 Sentinel POC Completion Gate
 Status: Approved
 Date: YYYY-MM-DD
-Case(s): QA-T8666
+Case(s): [QA-Case-002]
 Approvers:
 - QA/Automation lead: <name>
 - Domain/service engineer: <name>
@@ -148,8 +150,8 @@ The full input schema is defined in `.github/agents/sentinel-intake-schema.md`.
 
 | Field | Type | Required | Default |
 |---|---|---|---|
-| `source.projectKey` | string | Yes | `PR-87` |
-| `source.rootPath` | string | Yes | `Level 1 > Route service` |
+| `source.projectKey` | string | Yes | `[ProjectKey]` |
+| `source.rootPath` | string | Yes | `[ServiceRootPath]` |
 | `selection.caseId` | string | Yes | — |
 | `selection.automationStatus` | string | Yes | `not_automated` |
 | `scenario.description` | string | Yes | — |
@@ -198,7 +200,7 @@ The agent internally uses these components (all in `src/test/java/.../integratio
 
 | Component | Role |
 |---|---|
-| `BrowserStackClient` | HTTP transport for BrowserStack TM API v2 |
+| `[ExternalTestManagementClient]` | HTTP transport for BrowserStack TM API v2 |
 | `BrowserStackIntakeStage` | Stage 1 orchestrator — fetches manual candidates |
 | `CoverageIntake` | Normalized intake model bridging BrowserStack to scoring |
 | `CoverageMapper` | Deterministic match scoring engine |
@@ -234,12 +236,14 @@ The agent internally uses these components (all in `src/test/java/.../integratio
 
 ## Example walkthrough
 
-**Scenario:** Map `QA-T6504` (ParcelShop delivery) to existing coverage.
+**Scenario:** Map `[QA-Case-001]` (ParcelShop delivery) to existing coverage.
 
-1. Invoke: `@sentinel-intake-agent Map QA-T6504 from PR-87 > Level 1 > Route service > POST > routeDeliveryCreatePreadviceAndLabel`
+1. Invoke: `@sentinel-intake-agent Map [QA-Case-001] from [ProjectKey] > [ServiceRootPath] > POST > /<endpoint>`
 2. Agent discovers case, confirms with user
 3. Agent scores: endpoint match (50) + keyword match (20) = **70** → **Extend existing coverage**
-4. Agent recommends: extend `CreatePreadviceAndLabelTests#checkParcelShopIdInResponseLabelTest()`
-5. QA lead approves: `@sentinel-intake-agent Approve QA-T6504, approver: qa-lead`
+4. Agent recommends: extend `[EndpointSpecificTests]#[testMethodName]()`
+5. QA lead approves: `@sentinel-intake-agent Approve [QA-Case-001], approver: qa-lead`
 6. Agent validates schema, checks idempotency, appends row to coverage.md
 7. Audit trail: proposal ID, timestamp, approver identity, decision type recorded
+
+

@@ -84,3 +84,6 @@ Use this block when `command=generate-coverage-from-workspace`:
   - Schema validation: `<Pass | Fail>`
   - Markdown table integrity: `<Pass | Fail>`
   - Idempotency key handling: `<Pass | Fail>`
+
+
+

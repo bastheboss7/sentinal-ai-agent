@@ -19,3 +19,5 @@ Apply these rules for Sentinel work in this workspace.
 - Every recommendation must include a clear decision type and rationale.
 - Reference the nearest suite/class/test/step target for implementation.
 - Record coverage mapping outcomes in Sentinel tracking docs before implementation.
+
+

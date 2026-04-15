@@ -11,19 +11,19 @@ Sentinel supports two intake transport paths for BrowserStack case discovery:
 | Path | Tool / Class | When used | Handles auth | Handles pagination |
 |------|-------------|-----------|:---:|:---:|
 | **MCP (preferred)** | `mcp_browserstack_listTestCases` | BrowserStack VS Code extension installed and MCP enabled | Yes | Yes |
-| **Java client (fallback)** | `BrowserStackClient.fetchManualCasesByFolderId()` | MCP tool unavailable; also used for CI/pipeline execution | Yes | Manual |
+| **Java client (fallback)** | `[ExternalTestManagementClient.fetchCasesByFolderId()]` | MCP tool unavailable; also used for CI/pipeline execution | Yes | Manual |
 
-When the MCP tool is available, use it with `project_identifier` (default: `PR-87`) and optional `folder_id`. The MCP tool returns structured case data directly — no additional parsing or endpoint management is needed.
+When the MCP tool is available, use it with `project_identifier` (default: `[ProjectKey]`) and optional `folder_id`. The MCP tool returns structured case data directly — no additional parsing or endpoint management is needed.
 
-When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/co/evri/apiautomation/integrations/` provides equivalent functionality via the BrowserStack TM v2 REST API.
+When the MCP tool is unavailable, the Java transport layer at `src/test/java/[company]/[service]/automation/integrations/` provides equivalent functionality via the BrowserStack TM v2 REST API.
 
 ### Required fields
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `source.projectKey` | string | Yes | BrowserStack project key. Default: `PR-87`. |
-| `source.rootPath` | string | Yes | Root folder path supplied by user. Example: `Level 1 > Route service`. |
-| `selection.caseId` | string | Yes | Confirmed manual case identifier selected after shortlist. Example: `QA-T6504`. |
+| `source.projectKey` | string | Yes | BrowserStack project key. Default: `[ProjectKey]`. |
+| `source.rootPath` | string | Yes | Root folder path supplied by user. Example: `[ServiceRootPath]`. |
+| `selection.caseId` | string | Yes | Confirmed manual case identifier selected after shortlist. Example: `[QA-Case-XXX]`. |
 | `selection.caseTitle` | string | Yes | Confirmed manual test case title from BrowserStack. |
 | `selection.automationStatus` | string | Yes | Must be `not_automated` for intake mapping flow. |
 | `scenario.description` | string | Yes | Human-readable behavior under test. |
@@ -39,8 +39,8 @@ When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/
 1. `selection.caseId` must be non-empty and start with `QA-`.
 2. `selection.automationStatus` must equal `not_automated`.
 3. `scenario.description` and `scenario.expectedOutcome` must be non-empty.
-4. If `source.projectKey` is omitted, default to `PR-87`.
-5. If `source.rootPath` is omitted, default to `Level 1 > Route service`.
+4. If `source.projectKey` is omitted, default to `[ProjectKey]`.
+5. If `source.rootPath` is omitted, default to `[ServiceRootPath]`.
 6. A shortlist step is mandatory before `selection.caseId` is finalized.
 7. Selection confirmation is required before coverage mapping starts.
 
@@ -49,17 +49,17 @@ When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/
 ```json
 {
   "source": {
-    "projectKey": "PR-87",
-    "rootPath": "Level 1 > Route service"
+    "projectKey": "[ProjectKey]",
+    "rootPath": "[ServiceRootPath]"
   },
   "filters": {
-    "endpointFamily": "POST /routeDeliveryCreatePreadviceAndLabel",
+    "endpointFamily": "POST /delivery-operations/preadvice-and-label",
     "priorityBand": "Medium",
     "keyword": "ParcelShop"
   },
   "selection": {
-    "caseId": "QA-T6504",
-    "caseTitle": "API - POST - /routeDeliveryCreatePreadviceAndLabel - ParcelShop delivery",
+    "caseId": "[QA-Case-XXX]",
+    "caseTitle": "API - POST - /delivery-operations/preadvice-and-label - ParcelShop delivery",
     "automationStatus": "not_automated"
   },
   "scenario": {
@@ -98,7 +98,7 @@ When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/
 ```json
 {
   "intake": {
-    "rootPath": "Level 1 > Route service",
+    "rootPath": "[ServiceRootPath]",
     "shortlistSummary": "11 manual candidates found under root; narrowed by endpoint + keyword to 3 candidates.",
     "selectionConfirmed": true
   },
@@ -107,11 +107,11 @@ When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/
     "rationale": "Case behavior overlaps current ParcelShop positive path and should extend nearest existing test to avoid duplication."
   },
   "mapping": {
-    "nearestSuite": "CreatePreadviceAndLabelTests",
-    "nearestTarget": "CreatePreadviceAndLabelTests#checkParcelShopIdInResponseLabelTest",
+    "nearestSuite": "[PreadviceAndLabelTests]",
+    "nearestTarget": "[PreadviceAndLabelTests]#[testMethodName]",
     "coverageEvidence": [
       ".sentinel/output/coverage.md",
-      "CreatePreadviceAndLabelTests#checkParcelShopIdInResponseLabelTest"
+      "[PreadviceAndLabelTests]#[testMethodName]"
     ]
   },
   "risks": [
@@ -119,8 +119,8 @@ When the MCP tool is unavailable, the Java transport layer at `src/test/java/uk/
   ],
   "nextAction": "Update nearest existing test and re-run focused validation",
   "coverageDraft": {
-    "areaOrEndpoint": "POST /routeDeliveryCreatePreadviceAndLabel",
-    "browserStackIntake": "QA-T6504 - ParcelShop delivery",
+    "areaOrEndpoint": "POST /delivery-operations/preadvice-and-label",
+    "browserStackIntake": "[QA-Case-XXX] - ParcelShop delivery",
     "phaseDecision": "Extend existing coverage",
     "decisionRationale": "Reuses nearest ParcelShop scenario without introducing duplicate path."
   },
@@ -154,14 +154,14 @@ This contract defines how Sentinel reviews workspace tests and generates `.senti
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `command` | string | Yes | Must be `generate-coverage-from-workspace`. |
-| `scan.root` | string | Yes | Root path to scan for test suites. Default: `src/test/java/uk/co/evri/apiautomation`. |
+| `scan.root` | string | Yes | Root path to scan for test suites. Default: `src/test/java/[company]/[service]/automation`. |
 | `scan.includePatterns` | string[] | No | Optional include globs for focused scans. |
 | `scan.excludePatterns` | string[] | No | Optional exclude globs. |
 | `scan.discoveryMode` | string | Yes | `full` or `focused`. |
 | `write.mode` | string | Yes | Must be `direct`. |
 | `write.target` | string | Yes | Must be `.sentinel/output/coverage.md`. |
-| `source.projectKey` | string | Yes | BrowserStack project key. Default: `PR-87`. |
-| `source.rootPath` | string | Yes | BrowserStack root path. Default: `Level 1 > Route service`. |
+| `source.projectKey` | string | Yes | BrowserStack project key. Default: `[ProjectKey]`. |
+| `source.rootPath` | string | Yes | BrowserStack root path. Default: `[ServiceRootPath]`. |
 
 ### Coverage generation discovery output
 
@@ -281,3 +281,5 @@ This section defines additional metadata used when Sentinel is released to exter
   }
 }
 ```
+
+
