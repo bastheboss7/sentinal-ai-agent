@@ -1,249 +1,185 @@
-# Sentinel Agent Invocation Runbook
+# Sentinel V1 External Bundle
 
-This guide explains how to invoke the Sentinel Intake Agent, interpret its output, and complete the approval workflow.
+## Executive Summary
 
----
+Sentinel V1 is an enterprise QA decision package that maps manual test intent to existing automation coverage using a governed, auditable workflow.
 
-## Prerequisites
+This repository is the external distribution bundle and should be treated as the release source for Sentinel documentation, contracts, runbooks, and coverage decision evidence.
 
-| Requirement | Detail |
-|---|---|
-| VS Code | With GitHub Copilot Chat extension |
-| Workspace | Same VS Code workspace (multi-root) with both repositories open: Sentinel bundle repo and automation repo |
-| BrowserStack access | BrowserStack VS Code extension signed in with MCP enabled and project access available |
-| Agent file | `.github/agents/sentinel-intake.agent.md` must exist in workspace root |
+## Quick Start (5 Steps)
 
-Mapping quality depends on both roots being open in one workspace. If only the Sentinel bundle repo is open, shortlist retrieval may work but nearest-suite and nearest-target evidence can be incomplete.
+1. Install VS Code, GitHub Copilot, GitHub Copilot Chat, and BrowserStack VS Code extension (MCP enabled).
+2. Clone this Sentinel bundle repository and your automation repository.
+3. Open both repositories in one VS Code multi-root workspace.
+4. Confirm agent files exist:
+	- `.github/AGENTS.md`
+	- `.github/agents/sentinel-intake.agent.md`
+	- `.github/agents/sentinel-intake-schema.md`
+5. Run first smoke command in Copilot Chat:
 
-## Quick start
-
-### 1. Open Copilot Chat and invoke the agent
-
-In VS Code Copilot Chat, type:
-
-```
+```text
 @sentinel-intake-agent Map BrowserStack case [QA-Case-XXX] from [ProjectKey] to existing coverage
 ```
 
-Or use the full intake format:
+Expected first-run outcome:
+- case shortlist is returned
+- explicit case confirmation is requested
+- mapping output references nearest suite/target from the automation repository
 
-```
-@sentinel-intake-agent
-Project: [ProjectKey]
-Root path: [ServiceRootPath] > POST > /<endpoint>
-Case ID: [QA-Case-001]
-Scenario: [Business scenario description]
-Expected outcome: [Expected business/API outcome]
-```
+## Intended Audience
 
-### 2. Review the discovery shortlist
+- QA and automation leads
+- Domain and service engineers
+- Product and business stakeholders
+- Consumer teams onboarding Sentinel into their own automation repositories
 
-The agent will:
-1. Load workspace context from `<consumer-repo>/docs/product.md` and `<consumer-repo>/docs/structure.md`
-2. Query BrowserStack for manual cases under the specified root path
-3. Present a shortlist of `not_automated` cases for your confirmation
+## Bundle Purpose
 
-**Important:** The agent will not proceed without explicit case confirmation.
+Sentinel provides a controlled process to:
 
-### 3. Receive the decision package
+1. Discover manual cases from external test management
+2. Select and confirm one intake case
+3. Map to nearest existing automation path
+4. Classify disposition using deterministic taxonomy
+5. Produce approval-ready rationale and coverage draft
 
-After confirming a case, the agent produces:
+Decision taxonomy:
 
-| Output field | Description |
-|---|---|
-| `decision.type` | `Extend existing coverage`, `Net-new automation`, or `Traceability-only gap` |
-| `decision.rationale` | Evidence-based explanation citing existing tests |
-| `mapping.nearestSuite` | Closest existing test suite (e.g., `[EndpointSpecificTests]`) |
-| `mapping.nearestTarget` | Specific test method or class path |
-| `risks` | Identified risks for the recommendation |
-| `approval.status` | `Pending` — requires human review |
-| `coverage.DraftRow` | Proposed row for `.sentinel/output/coverage.md` |
+- Net-new automation
+- Extend existing coverage
+- Traceability-only gap
 
-### 4. Approve or reject the proposal
+## Repository Role and Boundaries
 
-Review the decision package with your team:
+This repository is:
 
-**Required reviewers:**
-- QA / Automation lead — validates technical fit
-- Domain / service engineer — confirms endpoint behavior
-- Product / business stakeholder — verifies priority alignment
+- External delivery package for Sentinel V1
+- Contract and governance source for intake-to-decision workflow
+- Documentation and runbook distribution point
 
-After review, tell the agent:
+This repository is not:
 
-```
-@sentinel-intake-agent Approve the proposal for [QA-Case-001], approver: qa-lead
-```
+- A test execution repository
+- A replacement for consumer automation codebases
+- A source for internal helper artifacts outside declared bundle scope
 
-Or reject:
+## Architecture and Contracts
 
-```
-@sentinel-intake-agent Reject the proposal for [QA-Case-001] — rationale conflicts with current API contract
-```
+Use the following entrypoints in order:
 
-### 5. Coverage file update
+1. .github/AGENTS.md
+2. copilot-instructions.md
+3. .sentinel/BUNDLE_DELIVERY_README.md
+4. .sentinel/architecture.md
+5. .sentinel/runbooks/using-sentinel-agent.md
 
-On approval, the agent:
-1. Validates the proposed row against markdown schema
-2. Checks idempotency (no duplicate case IDs)
-3. Appends the row to `.sentinel/output/coverage.md`
-4. Returns an audit-stamped confirmation
+Core contracts:
 
-### 6. POC Completion Gate (Sentinel sign-off)
+- .github/agents/sentinel-intake.agent.md
+- .github/agents/sentinel-intake-schema.md
+- .sentinel/templates/intake-response-template.md
 
-Use this gate to formally close the Sentinel POC stage.
+Evidence store:
 
-| Gate item | Requirement | Evidence source |
-|---|---|---|
-| POC case validated | At least one approved intake case is mapped and validated in environment | `.sentinel/output/coverage.md` |
-| Decision recorded | Phase 1 decision type and rationale are present | `.sentinel/output/coverage.md` |
-| Governance reviewers named | QA lead, domain engineer, product stakeholder identified | This runbook + approval record |
-| Approval state | Gate marked `Approved` with approver and date | PR comment / release note |
+- .sentinel/output/coverage.md
 
-**POC completion milestone label:**
+## Enterprise Operating Model
 
-`Sentinel POC Complete - External Delivery Ready (V1 Git Package)`
+### Workspace model (mandatory)
 
-**Sign-off template:**
+For production-quality mapping outcomes, open both repositories in one VS Code multi-root workspace:
 
-```text
-Sentinel POC Completion Gate
-Status: Approved
-Date: YYYY-MM-DD
-Case(s): [QA-Case-002]
-Approvers:
-- QA/Automation lead: <name>
-- Domain/service engineer: <name>
-- Product/business stakeholder: <name>
-Release owner: <name>
-```
+- Root 1: this Sentinel bundle repository
+- Root 2: consumer automation repository containing test suites and implementation paths
 
-### 7. External Team Handoff Pack
+If only this repository is open, intake discovery can still work but nearest-suite and nearest-target mapping quality may degrade.
 
-After POC sign-off, package Sentinel as a decoupled delivery bundle for external teams.
+### Transport model
 
-Bundle composition and external delivery boundaries are owned by `.sentinel/BUNDLE_DELIVERY_README.md`.
-Use this runbook for operator workflow, invocation steps, and troubleshooting only.
+- Preferred: MCP path for external test case discovery
+- V1 onboarding: MCP installation path only
+- Fallback transport references may appear as architectural context and are outside V1 installation baseline
 
----
+## Security and Compliance Controls
 
-## Governance decision criteria
+1. No secret values in committed artifacts
+2. No unreviewed mutation of coverage decisions
+3. Evidence-first outputs with explicit rationale chains
+4. Human approval gate required before implementation progression
+5. Append-only and idempotent decision-store behavior
 
-The agent applies deterministic scoring to classify each case:
+## Governance and Approval Model
 
-| Score range | Condition | Decision |
-|---|---|---|
-| ≥ 70 | — | **Extend existing coverage** |
-| 50–69 | + traceability match | **Traceability-only gap** |
-| < 50 | — | **Net-new automation** |
-| Tie at top | Ambiguous candidates | **Pending** (manual review required) |
+Required reviewers:
 
-Scoring components:
-- **Endpoint match** (0–50): exact = 50, contains = 35, shared token = 20
-- **Keyword overlap** (0–20): 10 per matching keyword, capped at 20
-- **Traceability link** (0–30): 30 if case ID appears in `@Link` annotation
+- QA and automation lead
+- Domain and service engineer
+- Product and business stakeholder
 
----
+No-go conditions:
 
-## Input contract
+- Missing required reviewer role
+- Ambiguous mapping without explicit pending disposition
+- Contract validation failure for coverage mutation draft
 
-The full input schema is defined in `.github/agents/sentinel-intake-schema.md`.
+## Installation and First Run
 
-| Field | Type | Required | Default |
-|---|---|---|---|
-| `source.projectKey` | string | Yes | `[ProjectKey]` |
-| `source.rootPath` | string | Yes | `[ServiceRootPath]` |
-| `selection.caseId` | string | Yes | — |
-| `selection.automationStatus` | string | Yes | `not_automated` |
-| `scenario.description` | string | Yes | — |
-| `scenario.expectedOutcome` | string | Yes | — |
-| `filters.endpointFamily` | string | No | — |
-| `filters.priorityBand` | string | No | — |
-| `filters.keyword` | string | No | — |
+For full installation and first-run steps, use:
 
----
+- .sentinel/BUNDLE_DELIVERY_README.md
+- .sentinel/runbooks/using-sentinel-agent.md
 
-## Output contract
+These documents include:
 
-The response follows `.sentinel/templates/intake-response-template.md` and includes:
+- Tooling prerequisites
+- MCP onboarding flow
+- Multi-root workspace requirement
+- First-run smoke command and troubleshooting signals
 
-| Section | Key fields |
-|---|---|
-| Intake summary | project, root path, case ID, automation status |
-| Coverage mapping | nearest suite, nearest target, evidence references |
-| Decision | type, rationale |
-| Risks & assumptions | identified risks, stated assumptions |
-| Approval gate | status, required reviewers |
-| coverage.md draft | formatted row for append |
+## Release and Versioning Guidance
 
----
+Recommended release practice for enterprise consumers:
 
-## Coverage generation (workspace scan mode)
+1. Tag bundle releases with immutable semantic versions
+2. Publish release notes with contract-impact summary
+3. Preserve backward compatibility for decision taxonomy and required output fields
+4. Treat schema and runbook changes as controlled change-management events
 
-For bulk workspace scanning:
+## Support and Escalation
 
-```
-@sentinel-intake-agent generate-coverage-from-workspace
-```
+Support path:
 
-This will:
-1. Scan `src/test/java/.../tests/` for `*Tests.java` files
-2. Extract `@Link`, `@DisplayName`, and method signatures
-3. Normalize into `CoverageCandidate` objects
-4. Map and score against current coverage
-5. Write validated rows to `.sentinel/output/coverage.md`
+- L1: consumer team champion
+- L2: Sentinel maintainers
+- L3: domain and service engineer
 
----
+Escalate when:
 
-## Pipeline components
+- Intake mapping repeatedly returns ambiguous outcomes
+- Contract behavior differs from schema definitions
+- Consumer environment cannot satisfy MCP onboarding requirements
 
-The agent internally uses these components (all in `src/test/java/.../integrations/`):
+## Known Constraints
 
-| Component | Role |
-|---|---|
-| `[ExternalTestManagementClient]` | HTTP transport for BrowserStack TM API v2 |
-| `BrowserStackIntakeStage` | Stage 1 orchestrator — fetches manual candidates |
-| `CoverageIntake` | Normalized intake model bridging BrowserStack to scoring |
-| `CoverageMapper` | Deterministic match scoring engine |
-| `WorkspaceCoverageScanner` | Workspace file scanner for test candidates |
-| `GovernanceGate` | Policy enforcement — classifies disposition |
-| `MutationProposal` | Immutable mutation request with audit metadata |
-| `CoverageMutationGate` | Validation-gated approval controller for coverage writes |
+Known constraints and external handoff assumptions are maintained in:
 
----
+- .sentinel/BUNDLE_DELIVERY_README.md
 
-## Guardrails
+## Out-of-Scope Artifacts
 
-- The agent **never** auto-picks a case without user confirmation
-- The agent **prefers extending** existing tests over creating parallel coverage
-- The agent **blocks PENDING** decisions from mutating coverage.md
-- The agent **enforces idempotency** — duplicate case IDs are rejected
-- The agent **requires a named approver** for every mutation
-- All mutations are **append-only** — no deletions from coverage.md
+Out-of-bundle and internal-only artifacts are defined in:
 
----
+- .sentinel/BUNDLE_DELIVERY_README.md
 
-## Troubleshooting
+Consumer teams should not depend on excluded internal helper content.
 
-| Problem | Cause | Fix |
-|---|---|---|
-| Agent not found in chat | Agent file missing or renamed | Verify `.github/agents/sentinel-intake.agent.md` exists |
-| 401 from BrowserStack | Invalid or expired token | Check `BROWSERSTACK_ACCESS_KEY` env variable or `browserstack.properties` |
-| "Case already exists" rejection | Idempotency guard fired | Case was already processed — check `.sentinel/output/coverage.md` |
-| PENDING decision blocking | Ambiguous scoring tie | Manually review candidates and re-invoke with narrowing filters |
-| Empty shortlist | No `not_automated` cases in folder | Verify BrowserStack folder ID and automation status |
+## Quick Validation Checklist
 
----
+Before adoption, verify:
 
-## Example walkthrough
-
-**Scenario:** Map `[QA-Case-001]` (ParcelShop delivery) to existing coverage.
-
-1. Invoke: `@sentinel-intake-agent Map [QA-Case-001] from [ProjectKey] > [ServiceRootPath] > POST > /<endpoint>`
-2. Agent discovers case, confirms with user
-3. Agent scores: endpoint match (50) + keyword match (20) = **70** → **Extend existing coverage**
-4. Agent recommends: extend `[EndpointSpecificTests]#[testMethodName]()`
-5. QA lead approves: `@sentinel-intake-agent Approve [QA-Case-001], approver: qa-lead`
-6. Agent validates schema, checks idempotency, appends row to coverage.md
-7. Audit trail: proposal ID, timestamp, approver identity, decision type recorded
-
+1. Required agent and schema files are present
+2. Installation prerequisites are satisfied
+3. Multi-root workspace includes both Sentinel and automation repositories
+4. First-run invocation returns shortlist and explicit selection flow
+5. Output package contains decision type, rationale, mapping target, and approval state
 
